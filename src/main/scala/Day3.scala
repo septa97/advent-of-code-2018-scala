@@ -10,27 +10,37 @@ object Day3 {
       id = idStr.trim.drop(1)
       Array(left, top) = leftTop.dropRight(1).trim.split(',')
       Array(width, height) = widthHeight.trim.split('x')
-    } yield
-      Claim(id.toInt, left.toInt, top.toInt, width.toInt, height.toInt) -> true
+    } yield Claim(id.toInt, left.toInt, top.toInt, width.toInt, height.toInt)
 
     val WIDTH = {
-      val claimMaxWidth = claims.maxBy(e => e._1.left + e._1.width)
-      claimMaxWidth._1.left + claimMaxWidth._1.width
+      val claimMaxWidth = claims.maxBy(e => e.left + e.width)
+      claimMaxWidth.left + claimMaxWidth.width
     }
     val HEIGHT = {
-      val claimMaxHeight = claims.maxBy(e => e._1.top + e._1.height)
-      claimMaxHeight._1.top + claimMaxHeight._1.height
+      val claimMaxHeight = claims.maxBy(e => e.top + e.height)
+      claimMaxHeight.top + claimMaxHeight.height
     }
     val matrix = Array.ofDim[Int](WIDTH, HEIGHT)
 
     for {
       claim <- claims
-      i <- claim._1.left until (claim._1.left + claim._1.width)
-      j <- claim._1.top until (claim._1.top + claim._1.height)
+      i <- claim.left until (claim.left + claim.width)
+      j <- claim.top until (claim.top + claim.height)
     } {
       matrix(i)(j) += 1
     }
 
     println(s"part 1: ${matrix.flatten.count(_ >= 2)}")
+
+    val claimsWithBool = for {
+      claim <- claims
+      rows = matrix.slice(claim.left, claim.left + claim.width)
+      isValid = rows
+        .map(_.slice(claim.top, claim.top + claim.height).forall(_ == 1))
+        .forall(identity)
+    } yield claim -> isValid
+
+    // Use get since we're sure that there's an answer
+    println(s"part 2: ${claimsWithBool.find(_._2).get._1.id}")
   }
 }
