@@ -1,26 +1,28 @@
 import scala.io.Source
 
 object Day5 {
+  private def hasReaction(a: Char, b: Char): Boolean =
+    a != b && a.toLower == b.toLower
+
+  private def react(input: String): String = {
+    input.foldLeft("")((result, curr) => {
+      if (!result.isEmpty && hasReaction(result.last, curr))
+        result.dropRight(1)
+      else
+        result + curr
+    })
+  }
+
   def main(args: Array[String]): Unit = {
-    var input = Source.fromFile("input/day5/input.txt").mkString.trim
+    val input = Source.fromFile("input/day5/input.txt").mkString.trim
+    val result = react(input)
 
-    var i = 0
-    var j = i + 1
+    println(s"part 1: ${result.length}")
 
-    while (i < input.length - 1) {
-      if (input(i).toLower == input(j).toLower && input(i) != input(j)) {
-        input = input.substring(0, i) + input.substring(j + 1)
+    val uniqueChars = input.map(_.toLower).toSet
+    val ans = uniqueChars.map(char =>
+      react(input.filter(c => c != char && c != char.toUpper)).length)
 
-        if (i - 1 >= 0) i -= 1
-        else i = 0
-
-        j = i + 1
-      } else {
-        i += 1
-        j = i + 1
-      }
-    }
-
-    println(s"part 1: ${input.length}")
+    println(s"part 2: ${ans.min}")
   }
 }
