@@ -3,48 +3,50 @@ import scala.io.Source
 
 object Day4 {
   final case class Detail(date: String, time: String, action: String)
+      extends Ordered[Detail] {
+    import scala.math.Ordered.orderingToOrdered
+
+    override def compare(that: Detail): Int =
+      (this.date, this.time, this.action) compare (that.date, that.time, that.action)
+  }
 
   private def getSleepCount(details: List[Detail]): Array[Int] = {
-    val shiftArrayNum = Array.ofDim[Int](60)
-
-    for {
-      detail <- details.sortWith((a, b) => a.time.compareTo(b.time) < 0)
-    } {
-      detail match {
-        case Detail(_, time, action) if action == "falls asleep" =>
-          val minute = time.substring(3).toInt
-          shiftArrayNum(minute) = 1
-        case Detail(_, time, action) if action == "wakes up" =>
-          val minute = time.substring(3).toInt
-          shiftArrayNum(minute) = 2
+    val possiblyIncompleteSleepArray = details
+      .filter(e => e.action == "falls asleep" || e.action == "wakes up")
+      .sortWith((a, b) => a.time.compareTo(b.time) < 0)
+      .sliding(2)
+      .zipWithIndex
+      .flatMap {
+        case (List(Detail(_, prevTime, _), Detail(_, currTime, currAction)), 0)
+            if currAction == "wakes up" =>
+          val a = prevTime.substring(3).toInt
+          val b = currTime.substring(3).toInt
+          val size = b - a
+          Array.fill[Int](a - 0)(0) ++ Array.fill[Int](size)(1) :+ 0
+        case (List(Detail(_, prevTime, _), Detail(_, currTime, currAction)), _)
+            if currAction == "falls asleep" =>
+          val a = prevTime.substring(3).toInt
+          val b = currTime.substring(3).toInt
+          val size = b - a - 1
+          Array.fill[Int](size)(0) :+ 1
+        case (List(Detail(_, prevTime, _), Detail(_, currTime, currAction)), _)
+            if currAction == "wakes up" =>
+          val a = prevTime.substring(3).toInt
+          val b = currTime.substring(3).toInt
+          val size = b - a - 1
+          Array.fill[Int](size)(1) :+ 0
       }
-    }
+      .toArray
 
-    var num = shiftArrayNum(0)
+    val sleepArray = possiblyIncompleteSleepArray ++ Array.fill[Int](
+      60 - possiblyIncompleteSleepArray.length)(
+      if (!possiblyIncompleteSleepArray.isEmpty)
+        possiblyIncompleteSleepArray.last
+      else 0)
 
-    val sleepArray = for {
-      i <- shiftArrayNum.indices
-    } yield {
-      num match {
-        case 0 if shiftArrayNum(i) != 1 =>
-          0
-        case 0 if shiftArrayNum(i) == 1 =>
-          num = 1
-          1
-        case 1 if shiftArrayNum(i) != 2 =>
-          1
-        case 1 if shiftArrayNum(i) == 2 =>
-          num = 2
-          0
-        case 2 if shiftArrayNum(i) != 1 =>
-          0
-        case 2 if shiftArrayNum(i) == 1 =>
-          num = 1
-          1
-      }
-    }
+    assert(sleepArray.length == 60)
 
-    sleepArray.toArray
+    sleepArray
   }
 
   def main(args: Array[String]): Unit = {
@@ -54,15 +56,7 @@ object Day4 {
       datetime = d.drop(1).split(' ')
     } yield Detail(datetime(0), datetime(1), action.trim)
 
-    val sortedDetails = details
-      .sortWith { (a, b) =>
-        a.date.compareTo(b.date) match {
-          case 0 =>
-            a.time.compareTo(b.time) < 0
-          case result =>
-            result < 0
-        }
-      }
+    val sortedDetails = details.sorted
 
     val shiftStarts = sortedDetails
       .map(_.action.startsWith("Guard #"))
