@@ -3,10 +3,9 @@ import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 object Day7 {
-  private def sortNodes(
-      s: mutable.SortedSet[String],
-      adjList: mutable.Map[String, List[String]],
-      incomingEdgesMap: mutable.Map[String, Int]): List[String] = {
+  private def sortNodes(s: mutable.SortedSet[String],
+                        adjList: mutable.Map[String, List[String]],
+                        incomingEdgesMap: mutable.Map[String, Int]): String = {
     val sortedNodes: ListBuffer[String] = new ListBuffer[String]()
 
     while (s.nonEmpty) {
@@ -28,7 +27,7 @@ object Day7 {
       }
     }
 
-    sortedNodes.toList
+    sortedNodes.toList.mkString
   }
 
   def main(args: Array[String]): Unit = {
@@ -67,7 +66,7 @@ object Day7 {
 
     for ((_, v) <- adjList) v.foreach(e => s -= e)
 
-    val sortedNodes = sortNodes(s, adjList, incomingEdgesMap).mkString
+    val sortedNodes = sortNodes(s, adjList, incomingEdgesMap)
     println(s"part 1: $sortedNodes")
   }
 }
